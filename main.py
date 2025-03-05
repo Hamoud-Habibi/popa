@@ -1,34 +1,25 @@
 import torch
 import base64
-import urllib.request
 import json
 from io import BytesIO
 from PIL import Image
 from transformers import AutoProcessor, Qwen2VLForConditionalGeneration
-import matplotlib.pyplot as plt
-from olmocr.olmocr.data.renderpdf import render_pdf_to_base64png
-from olmocr.olmocr.prompts import build_finetuning_prompt
-from olmocr.olmocr.prompts.anchor import get_anchor_text
-from PyPDF2 import PdfReader
 
 model = Qwen2VLForConditionalGeneration.from_pretrained("allenai/olmOCR-7B-0225-preview", torch_dtype=torch.bfloat16).eval()
-print('end')
+
 processor = AutoProcessor.from_pretrained("Qwen/Qwen2-VL-7B-Instruct", use_fast=True)
-print('start')
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 
 
-def ocr_pdf_page(pdf_path, page_number):
+def ocr_pdf_page(file_path):
     # Render page 1 to an image
-    image_base64 = render_pdf_to_base64png("./paper.pdf", page_number, target_longest_image_dim=1024)
+    with open(file_path, "rb") as image_file:
+        image_base64 = base64.b64encode(image_file.read())
 
-    # Build the prompt, using document metadata
-    anchor_text = get_anchor_text("./paper.pdf", 1, pdf_engine="pdfreport", target_length=4000)
-
-    prompt = build_finetuning_prompt(anchor_text)
-
+    prompt = 'Below is the image of one page of a document, as well as some raw textual content that was previously extracted for it. Just return the plain text representation of this document as if you were reading it naturally. Do not hallucinate.'
     # Build the full prompt
     messages = [
                 {
@@ -75,49 +66,11 @@ def ocr_pdf_page(pdf_path, page_number):
 
 
 
-def get_pdf_page_count(pdf_path):
-    """Gets the number of pages in a PDF file using PyPDF2.
-
-    Args:
-        pdf_path: The path to the PDF file.
-
-    Returns:
-        The number of pages in the PDF, or None if an error occurs.
-    """
-    try:
-        pdf = PdfReader(pdf_path)
-        return len(pdf.pages)
-    except Exception as e:
-        print(f"Error using PyPDF2: {e}")
-        return None
-
-
-# Example usage (assuming you have a file named 'paper.pdf'):
-page_count = get_pdf_page_count("./paper.pdf")
-
-if page_count:
-  print(f"The PDF has {page_count} pages.")
 
 
 
-
-
-
-FILE_PATH = "./paper.pdf"
-
-NUM_PAGES = get_pdf_page_count(FILE_PATH)
-
-pages = []
-
-for i in range(NUM_PAGES):
-    print(f"Processing page {i+1} of {NUM_PAGES}")
-    page_json = ocr_pdf_page(FILE_PATH, i+1)
-    pages.append(page_json)
-
-
-for page_json in pages:
-    try:
-        data = json.loads(page_json)
-        print(data["natural_text"])
-    except:
-        print(page_json)
+FILE_PATH = "./paper.png"
+print('poexal')
+page_json = ocr_pdf_page(FILE_PATH)
+data = json.loads(page_json)
+print(data["natural_text"])
