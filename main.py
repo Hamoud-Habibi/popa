@@ -73,5 +73,5 @@ FILE_PATH = "./paper.png"
 print('poexal')
 page_json = ocr_pdf_page(FILE_PATH)
 data = json.loads(page_json)
-with open(FILE_PATH, 'w') as text_file:
+with open(f'{FILE_PATH}.txt', 'w') as text_file:
     text_file.write(data["natural_text"])
