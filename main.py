@@ -60,7 +60,6 @@ def ocr_pdf_page(file_path):
         new_tokens, skip_special_tokens=True
     )
 
-    print(text_output)
     return text_output[0]
 
 
@@ -70,7 +69,7 @@ def ocr_pdf_page(file_path):
 
 
 FILE_PATH = "./paper.png"
-print('poexal')
+
 page_json = ocr_pdf_page(FILE_PATH)
 data = json.loads(page_json)
 with open(f'{FILE_PATH}.txt', 'w') as text_file:
